@@ -13,14 +13,16 @@ typedef struct
     char name[20];
     int age;
 }Student;
-
-int main(void)
+void initialStu(Student *p)
 {
-    Student stu;
-    Student *p = &stu;
     (*p).id = 1900;                                     /*p->id = 1900;*/              
     (*p).age = 20;                                      /*p->age = 20;*/
     strcpy((*p).name, "xiaoming");                      /*p->name = "xiaoming";*/
+}
+int main(void)
+{
+    Student stu;
+    initialStu(&stu);
     printf("%d--%s--%d\n", stu.id, stu.name, stu.age);
     return 0;
 }
