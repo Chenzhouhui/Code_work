@@ -12,6 +12,6 @@ int main(void)
     printf("x = %d, y = %d\r\n", x, y);
     swap(&x, &y);
     printf("x = %d, y = %d\r\n", x, y);
-
+    printf("Hello Git!\r\n");
     return 0;
 }
