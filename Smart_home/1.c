@@ -4,44 +4,60 @@ int main() {
     printf("Welcome to the Smart Home System!\n");
     /* 器件选型 
     主控：STM32F103C8T6
-    HC-SR501/人体红外传感器
-    BH1750/光照传感器
-    MQ7/一氧化碳传感器
-    MQ4/甲烷传感器
-    1.44 TFT 彩屏
-    AHT20/温湿度传感器
-    esp8266—01sWifi模块
+    HC-SR501/人体红外传感器 5V
+    BH1750/光照传感器 3.3V
+    MQ7/一氧化碳传感器 5V
+    MQ4/甲烷传感器 5V
+    1.44 TFT 彩屏 5V
+    AHT20/温湿度传感器 3.3V
+    esp8266—01sWifi模块 3.3V
 
-     外设与引脚分配（建议方案）
-     1) I2C1 总线（共用）
-         PB6 -> I2C1_SCL -> BH1750 SCL、AHT20 SCL
-         PB7 -> I2C1_SDA -> BH1750 SDA、AHT20 SDA
-
-     2) ADC 采样
-         PA0 -> ADC1_IN0 -> MQ7 AO（CO 浓度模拟量）
-         PA1 -> ADC1_IN1 -> MQ4 AO（甲烷浓度模拟量）
-
-     3) 人体红外（数字输入）
-         PB0 -> GPIO/EXTI0 -> HC-SR501 OUT
-
-     4) TFT 1.44 SPI 屏（以 ST7735 常见接口为例）
-         PA5 -> SPI1_SCK  -> TFT SCK
-         PA7 -> SPI1_MOSI -> TFT SDA/MOSI
-         PA4 -> GPIO      -> TFT CS
-         PA6 -> GPIO      -> TFT DC/RS
-         PA8 -> GPIO      -> TFT RST
-         PB1 -> TIM3_CH4  -> TFT BL（背光 PWM，可选）
-
-     5) WiFi 模块 ESP8266-01S（USART2）
-         PA2 -> USART2_TX -> ESP8266 RX
-         PA3 -> USART2_RX -> ESP8266 TX
-         PB10 -> GPIO     -> ESP8266 EN/CH_PD（拉高使能）
-         PB11 -> GPIO     -> ESP8266 RST（低电平复位，可选）
-
-     6) 供电与电平注意
-         - STM32、BH1750、AHT20、ESP8266 使用 3.3V。
-         - MQ7/MQ4 常见模块多为 5V 供电，AO 进入 PA0/PA1 前需分压到 0~3.3V。
-         - TFT 若是 3.3V 逻辑版本可直连；若为 5V 逻辑需电平转换。
+    外设与引脚分配(留出一个串口来调试:USART1 PA9/PA10)
+    1)MQ-4甲烷传感器：
+    VCC --> 5V
+    GND --> GND
+    DO --> PB0(输入/中断,需3.3V)
+    AO --> PA0(ADC1_IN0,需分压)
+    ------------------------------------------------
+    2)MQ-7一氧化碳传感器：
+    VCC --> 5V
+    GND --> GND
+    DO --> PB1(输入/中断,需3.3V)
+    AO --> PA1(ADC1_IN1,需分压)
+    ------------------------------------------------
+    3)BH1750光照传感器：
+    VCC --> 3.3V
+    GND --> GND
+    SCL --> PB6(I2C1_SCL)
+    SDA --> PB7(I2C1_SDA)
+    ADDR --> GND(0x23)
+    --------------------------------------------------
+    4)AHT20温湿度传感器：
+    3V3 --> 3.3V
+    SDA --> PB7(与BH1750共线)
+    SCL --> PB6(与BH1750共线)
+    GND --> GND
+    --------------------------------------------------
+     5)HC-SR501人体红外传感器：
+    VCC --> 5V
+    GND --> GND
+    OUT --> PB10(输入/中断)
+    ----------------------------------------------------
+    6)1.44 TFT 彩屏：
+    VCC --> 3.3V(建议)
+    GND --> GND
+    CS --> PA4
+    RESET --> PB13
+    RS --> PB12
+    SDI(MOSI) --> PA7(SPI1_MOSI)
+    SCK --> PA5(SPI1_SCK)
+    LED --> 3.3V(可PB14 PWM)
+    ----------------------------------------------------
+    7)ESP8266-01S WiFi模块：
+    VCC --> 3.3V(>=500mA)
+    GND --> GND
+    TX --> PA3(USART2_RX)
+    RX --> PA2(USART2_TX)
     */
     return 0;
 }
