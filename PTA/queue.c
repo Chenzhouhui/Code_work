@@ -61,94 +61,187 @@ int main() {
 	return 0;
 }
 */
-/*7-2window消息队列*/
-
+/*7-2window消息队列
 #include <stdio.h>
 #include <string.h>
 
+#define MAX_N 100005
+
 typedef struct {
-	char name[12];
-	int priority;
-	int order;
-} Msg;
+    char name[15];
+    int priority;
+} Message;
 
-void swap(Msg *a, Msg *b) {
-	Msg t = *a;
-	*a = *b;
-	*b = t;
+Message heap[MAX_N];
+int size = 0;
+
+// 向上调整堆
+void push(char* name, int priority) {
+    size++;
+    int i = size;
+    // 寻找插入位置（小顶堆）
+    while (i > 1 && heap[i / 2].priority > priority) {
+        heap[i] = heap[i / 2];
+        i /= 2;
+    }
+    strcpy(heap[i].name, name);
+    heap[i].priority = priority;
 }
 
-void heap_push(Msg heap[], int *size, Msg x) {
-	int i = ++(*size);
-	heap[i] = x;
-	while (i > 1) {
-		int p = i / 2;
-		if (heap[p].priority < heap[i].priority ||
-			(heap[p].priority == heap[i].priority && heap[p].order < heap[i].order)) {
-			break;
-		}
-		swap(&heap[p], &heap[i]);
-		i = p;
-	}
-}
+// 向下调整堆
+void pop() {
+    if (size == 0) {
+        printf("EMPTY QUEUE!\n");
+        return;
+    }
+    printf("%s\n", heap[1].name);
 
-Msg heap_pop(Msg heap[], int *size) {
-	Msg top = heap[1];
-	heap[1] = heap[*size];
-	(*size)--;
-
-	int i = 1;
-	while (1) {
-		int l = i * 2;
-		int r = l + 1;
-		int best = i;
-
-		if (l <= *size && (heap[l].priority < heap[best].priority ||
-			(heap[l].priority == heap[best].priority && heap[l].order < heap[best].order))) {
-			best = l;
-		}
-		if (r <= *size && (heap[r].priority < heap[best].priority ||
-			(heap[r].priority == heap[best].priority && heap[r].order < heap[best].order))) {
-			best = r;
-		}
-		if (best == i) {
-			break;
-		}
-		swap(&heap[i], &heap[best]);
-		i = best;
-	}
-
-	return top;
+    Message last = heap[size--];
+    int parent = 1, child;
+    while (parent * 2 <= size) {
+        child = parent * 2;
+        if (child < size && heap[child + 1].priority < heap[child].priority) {
+            child++;
+        }
+        if (last.priority <= heap[child].priority) break;
+        heap[parent] = heap[child];
+        parent = child;
+    }
+    if (size >= 0) heap[parent] = last;
 }
 
 int main() {
-	int n;
-	if (scanf("%d", &n) != 1) {
-		return 0;
-	}
+    int n;
+    if (scanf("%d", &n) != 1) return 0;
 
-	Msg heap[100005];
-	int size = 0;
-	int timer = 0;
+    char op[5];
+    while (n--) {
+        scanf("%s", op);
+        if (strcmp(op, "PUT") == 0) {
+            char name[15];
+            int p;
+            scanf("%s %d", name, &p);
+            push(name, p);
+        } else {
+            pop();
+        }
+    }
+    return 0;
+}
+*/
+/*7-3银行排队问题之单队列多窗口服务
+#include <stdio.h>
 
-	for (int i = 0; i < n; i++) {
-		char cmd[8];
-		scanf("%s", cmd);
+int main() {
+    int N, K;
+    if (scanf("%d", &N) != 1) return 0;
 
-		if (strcmp(cmd, "PUT") == 0) {
-			Msg x;
-			scanf("%s %d", x.name, &x.priority);
-			x.order = timer++;
-			heap_push(heap, &size, x);
-		} else {
-			if (size == 0) {
-				printf("EMPTY QUEUE!\n");
-			} else {
-				Msg x = heap_pop(heap, &size);
-				printf("%s %d\n", x.name, x.priority);
-			}
-		}
-	}
+    int T[1005], P[1005];
+    for (int i = 0; i < N; i++) {
+        scanf("%d %d", &T[i], &P[i]);
+        if (P[i] > 60) P[i] = 60; 
+    }
+    scanf("%d", &K);
 
-	return 0;
+    int win_finish[15] = {0}; // 窗口空闲时间
+    int win_count[15] = {0};  // 窗口服务人数
+    int total_wait = 0;
+    int max_wait = 0;
+
+    for (int i = 0; i < N; i++) {
+        int target_win = -1;
+        int min_finish_time = 2e9; // 找最早结束时间
+
+        // 1. 优先找序号最小且已经空闲的窗口
+        for (int j = 0; j < K; j++) {
+            if (win_finish[j] <= T[i]) {
+                target_win = j;
+                break;
+            }
+        }
+
+        // 2. 如果都在忙，找最早结束的窗口
+        if (target_win == -1) {
+            for (int j = 0; j < K; j++) {
+                if (win_finish[j] < min_finish_time) {
+                    min_finish_time = win_finish[j];
+                    target_win = j;
+                }
+            }
+        }
+
+        // 3. 计算等待和更新
+        int start_time;
+        if (win_finish[target_win] <= T[i]) {
+            start_time = T[i];
+        } else {
+            start_time = win_finish[target_win];
+            int wait = start_time - T[i];
+            total_wait += wait;
+            if (wait > max_wait) max_wait = wait;
+        }
+
+        win_finish[target_win] = start_time + P[i];
+        win_count[target_win]++;
+    }
+
+    // 4. 计算最后完成时间
+    int last_finish = 0;
+    for (int j = 0; j < K; j++) {
+        if (win_finish[j] > last_finish) last_finish = win_finish[j];
+    }
+
+    // 输出结果
+    printf("%.1f %d %d\n", (double)total_wait / N, max_wait, last_finish);
+    for (int j = 0; j < K; j++) {
+        printf("%d%c", win_count[j], (j == K - 1 ? '\n' : ' '));
+    }
+
+    return 0;
+}
+*/
+/*7-4列车调度*/
+#include <stdio.h>
+
+int main() {
+    int n;
+    // 读取列车总数
+    if (scanf("%d", &n) != 1) return 0;
+
+    // tails 数组记录每条轨道末尾火车的编号
+    // 在贪心替换的过程中，tails 数组会自然保持升序
+    int tails[100005];
+    int count = 0; // 当前开启的轨道总数
+
+    for (int i = 0; i < n; i++) {
+        int train;
+        scanf("%d", &train);
+
+        // 使用二分查找在 tails 中找到第一个大于 train 的数
+        int low = 0, high = count - 1;
+        int pos = count; // 初始假设找不到（需要开新轨道）
+
+        while (low <= high) {
+            int mid = low + (high - low) / 2;
+            if (tails[mid] > train) {
+                pos = mid;    // 找到了一个候选轨道
+                high = mid - 1; // 继续向左找更小的“大于 train 的数”
+            } else {
+                low = mid + 1;
+            }
+        }
+
+        if (pos == count) {
+            // 没找到大于 train 的数，必须新开一条轨道
+            tails[count++] = train;
+        } else {
+            // 找到了，更新该轨道的末尾值为这辆更小的火车
+            tails[pos] = train;
+        }
+    }
+
+    // 最后 count 的值就是所需的最少轨道数
+    printf("%d\n", count);
+
+    return 0;
 }
